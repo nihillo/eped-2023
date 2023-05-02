@@ -6,7 +6,6 @@ import es.uned.lsi.eped.DataStructures.IteratorIF;
 import es.uned.lsi.eped.DataStructures.List;
 import es.uned.lsi.eped.DataStructures.ListIF;
 import es.uned.lsi.eped.DataStructures.Queue;
-import es.uned.lsi.eped.DataStructures.QueueIF;
 import es.uned.lsi.eped.DataStructures.SequenceIF;
 
 public class StockTree implements StockIF {
@@ -138,7 +137,7 @@ public class StockTree implements StockIF {
 	 * Prepara cola de nodos a insertar
 	 */
 	private Queue<Node> getAuxInsertQueue(String p, int u) {
-		Queue queue = new Queue<Node>();
+		Queue<Node> queue = new Queue<Node>();
 		for (int i = 0; i < p.length(); i++) {
 			queue.enqueue(new NodeInner(p.charAt(i)));
 		}
@@ -152,7 +151,7 @@ public class StockTree implements StockIF {
 	 * Prepara cola de nodos a leer
 	 */	
 	private Queue<Node> getAuxReadQueue(String p) {
-		Queue queue = new Queue<Node>();
+		Queue<Node> queue = new Queue<Node>();
 		for (int i = 0; i < p.length(); i++) {
 			queue.enqueue(new NodeInner(p.charAt(i)));
 		}
@@ -202,7 +201,7 @@ public class StockTree implements StockIF {
 	
 	private GTreeIF<Node> createChild(GTreeIF<Node> parentTree, Node node) {
 		
-		GTreeIF<Node> childTree = new GTree();
+		GTreeIF<Node> childTree = new GTree<Node>();
 		childTree.setRoot(node);
 		
 		ListIF<GTreeIF<Node>> children = parentTree.getChildren();
@@ -239,7 +238,7 @@ public class StockTree implements StockIF {
 	}
 	
 	private GTreeIF<Node> createChild(GTreeIF<Node> parentTree, Node node, int position) {
-		GTreeIF<Node> childTree = new GTree();
+		GTreeIF<Node> childTree = new GTree<Node>();
 		childTree.setRoot(node);
 		parentTree.addChild(1, childTree);
 		
@@ -328,15 +327,15 @@ public class StockTree implements StockIF {
 
 
 	
-	/*
-	 * TODO remove
-	 */
-	private void _test() {
-		IteratorIF<Node> it = this.stock.iterator(GTree.IteratorModes.BREADTH);
-		while (it.hasNext()) {
-			Node n = it.getNext();
-			int test = 1;
-		}
-	}
+	// /*
+	//  * TODO remove
+	//  */
+	// private void _test() {
+	// 	IteratorIF<Node> it = this.stock.iterator(GTree.IteratorModes.BREADTH);
+	// 	while (it.hasNext()) {
+	// 		Node n = it.getNext();
+	// 		int test = 1;
+	// 	}
+	// }
 	
 }

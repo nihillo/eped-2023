@@ -15,7 +15,18 @@ public class StockSequence<E> implements StockIF {
 	
 	@Override
 	public int retrieveStock(String p) {
-		StockPair stockElement = searchByProductID(p);
+		StockPair stockElement = null;
+		
+		IteratorIF<StockPair> iterator = this.stock.iterator();
+		boolean found = false;
+		while (iterator.hasNext() && !found) {
+			StockPair element = iterator.getNext();
+			if (element.getProducto().equals(p)) {
+				stockElement = element;
+				found = true;
+			}			
+		}
+		
 		if(stockElement == null) {
 			return -1;
 		}
@@ -25,19 +36,35 @@ public class StockSequence<E> implements StockIF {
 	
 	@Override
 	public void updateStock(String p, int u) {
-		StockPair existingStockElement = searchByProductID(p);
 		
-		if (existingStockElement != null) {
-			existingStockElement.setUnidades(u);
-		} else {
-			insertNewStockElement(p, u);
+		IteratorIF<StockPair> iterator = this.stock.iterator();
+		boolean found = false;
+		boolean inserted = false;
+		int pos = 1;
+		while (iterator.hasNext() && !found && !inserted) {
+			StockPair element = iterator.getNext();
+			if (element.getProducto().equals(p)) {
+				element.setUnidades(u);
+				found = true;
+			} else if (element.getProducto().compareTo(p) > 0) {
+				StockPair newElement = new StockPair(p, u);
+				this.stock.insert(pos, newElement);
+				inserted = true;
+			}
+			pos++;
+		}
+		
+		if (!found && !inserted) {
+			StockPair newElement = new StockPair(p, u);
+			this.stock.insert(this.stock.size() + 1, newElement);
+			inserted = true;
 		}
 		
 	}
 	
 	@Override
 	public SequenceIF<StockPair> listStock(String prefix) {
-		if (prefix == "") {
+		if (prefix.length() == 0) {
 			return this.stock;
 		}
 		
@@ -53,47 +80,4 @@ public class StockSequence<E> implements StockIF {
 		
 		return partialStockList;
 	}
-
-	
-	/*
-	 * Busca un nodo por ID de producto
-	 */
-	private StockPair searchByProductID(String p) {
-		IteratorIF<StockPair> iterator = this.stock.iterator();
-		while (iterator.hasNext()) {
-			StockPair element = iterator.getNext();
-			if (element.getProducto().equals(p)) 
-				return element;
-		}
-		
-		return null;
-	}	
-	
-	
-	/*
-	 * Inserta un nuevo nodo, ordenando alfabéticamente por el índice de producto
-	 */
-	private void insertNewStockElement(String p, int u) {
-		
-		StockPair newElement = new StockPair(p, u);
-			
-		// Iterar la lista hasta encontrar la posición en que debe entrar el elemento
-		// según orden alfabético de ID, e insertarlo en esta
-		IteratorIF<StockPair> iterator = this.stock.iterator();
-		int pos = 1;
-		boolean inserted = false;
-		while (iterator.hasNext() && !inserted) {
-			StockPair currentElement = iterator.getNext();
-			if (currentElement.getProducto().compareTo(p) > 0) {
-				this.stock.insert(pos, newElement);
-				inserted = true;
-			}
-			pos++;
-		}
-		// Si se termina de recorrer sin haberlo insertado, insertarlo al final
-		if (!inserted) {
-			this.stock.insert(this.stock.size() + 1, newElement);
-			inserted = true;
-		}
-	}	
 }

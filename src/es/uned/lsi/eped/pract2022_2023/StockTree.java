@@ -45,26 +45,6 @@ public class StockTree implements StockIF {
 		return units;
 	}
 	
-	
-	private GTreeIF<Node> readPath(GTreeIF<Node> parentTree, Queue<Node> queue, boolean insertIfNotFound) {
-		GTreeIF<Node> targetTree;
-		
-		Node node = queue.getFirst();		
-		queue.dequeue();
-		
-		GTreeIF<Node> child = insertIfNotFound ? this.getOrCreateChild(parentTree, node) : this.getChild(parentTree, node);
-		
-		if (child == null || queue.isEmpty()) {
-			targetTree = child;
-		} else {
-			targetTree = readPath(child, queue, insertIfNotFound);
-		}
-		
-		return targetTree;
-	}
-
-
-
 	@Override
 	public void updateStock(String p, int u) {
 		// Obtenemos cola auxiliar con los nodos
@@ -91,13 +71,29 @@ public class StockTree implements StockIF {
 		}
 		
 		StringBuilder strBuilder = new StringBuilder(prefix);
-		readChildren(startTree, stockList, strBuilder);		
+		if (startTree != null) {
+			readChildren(startTree, stockList, strBuilder);
+		}
 		
 		return stockList;
 	}
 	
-	
-	
+	private GTreeIF<Node> readPath(GTreeIF<Node> parentTree, Queue<Node> queue, boolean insertIfNotFound) {
+		GTreeIF<Node> targetTree;
+		
+		Node node = queue.getFirst();		
+		queue.dequeue();
+		
+		GTreeIF<Node> child = insertIfNotFound ? this.getOrCreateChild(parentTree, node) : this.getChild(parentTree, node);
+		
+		if (child == null || queue.isEmpty()) {
+			targetTree = child;
+		} else {
+			targetTree = readPath(child, queue, insertIfNotFound);
+		}
+		
+		return targetTree;
+	}	
 	
 	private void readChildren(GTreeIF<Node> parentTree, ListIF<StockPair> stockList, StringBuilder strBuilder) {
 		ListIF<GTreeIF<Node>> children = parentTree.getChildren();

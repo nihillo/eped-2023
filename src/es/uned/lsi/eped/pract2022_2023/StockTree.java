@@ -25,39 +25,55 @@ public class StockTree implements StockIF {
 		
 		// Obtenemos cola auxiliar con los nodos
 		// a leer en el árbol
-		Queue<Node> queue = getAuxReadQueue(p);
+		Queue<Node> queue = getAuxQueue(p);
 		
-		GTreeIF<Node> tree = this.stock;
+		// leemos recursivamente en el árbol los nodos de la cola
+		GTreeIF<Node> tree = readPath(this.stock, queue, false);
 		
-		
-		/* 
-		 * TODO refactor como recursiva 
-		 */
-		boolean productNotFound = false;
-		while (!queue.isEmpty() && !productNotFound) {
-		
-			if (!productNotFound) {
-				GTreeIF<Node> infoChild = getInfoChild(tree);
-				if (infoChild == null) {
-					units = -1;
-				} else {
-					NodeInfo node = (NodeInfo) infoChild.getRoot();
-					units = node.getUnidades(); 
-				}
-				
-			}
+		if (tree == null) {
+			units = -1;
+		} else {
+			GTreeIF<Node> infoChild = getInfoChild(tree);
+			if (infoChild == null) {
+				units = -1;
+			} else {
+				NodeInfo node = (NodeInfo) infoChild.getRoot();
+				units = node.getUnidades(); 
+			}	
 		}
 		
 		return units;
 	}
+	
+	/* TODO volver a separar en dos: readPath y buildPath */
+	private GTreeIF<Node> readPath(GTreeIF<Node> parentTree, Queue<Node> queue, boolean insertIfNotFound) {
+		GTreeIF<Node> targetTree;
+		
+		Node node = queue.getFirst();		
+		queue.dequeue();
+		
+		GTreeIF<Node> child = insertIfNotFound ? this.getOrCreateChild(parentTree, node) : this.getChild(parentTree, node);
+		
+		if (child == null || queue.isEmpty()) {
+			targetTree = child;
+		} else {
+			targetTree = readPath(child, queue, insertIfNotFound);
+		}
+		
+		return targetTree;
+	}
+
+
 
 	@Override
 	public void updateStock(String p, int u) {
 		// Obtenemos cola auxiliar con los nodos
 		// preparados para el árbol
-		Queue<Node> queue = getAuxInsertQueue(p, u);
+		Queue<Node> queue = getAuxQueue(p);
 		
-		GTreeIF<Node> tree = this.stock;
+		
+		// leemos o insertamos recursivamente en el árbol los nodos de la cola
+		GTreeIF<Node> tree = readPath(this.stock, queue, true);
 		
 		/*
 		 * TODO refactor como recursiva
@@ -71,14 +87,14 @@ public class StockTree implements StockIF {
 			queue.dequeue();
 		}
 	}
-	
+
 	@Override
 	public SequenceIF<StockPair> listStock(String prefix) {
 		ListIF<StockPair> stockList = new List<StockPair>();
 		
 		GTreeIF<Node> startTree = this.stock;
 		if (prefix.length() > 0) {
-			Queue<Node> queue = getAuxReadQueue(prefix);
+			Queue<Node> queue = getAuxQueue(prefix);
 			while (!queue.isEmpty()) {
 				Node nextNode = queue.getFirst();
 				
@@ -133,24 +149,11 @@ public class StockTree implements StockIF {
 		}
 	}
 
-	/*
-	 * Prepara cola de nodos a insertar
-	 */
-	private Queue<Node> getAuxInsertQueue(String p, int u) {
-		Queue<Node> queue = new Queue<Node>();
-		for (int i = 0; i < p.length(); i++) {
-			queue.enqueue(new NodeInner(p.charAt(i)));
-		}
-		
-		queue.enqueue(new NodeInfo(u));
-		
-		return queue;
-	}
 	
 	/*
 	 * Prepara cola de nodos a leer
 	 */	
-	private Queue<Node> getAuxReadQueue(String p) {
+	private Queue<Node> getAuxQueue(String p) {
 		Queue<Node> queue = new Queue<Node>();
 		for (int i = 0; i < p.length(); i++) {
 			queue.enqueue(new NodeInner(p.charAt(i)));
@@ -324,18 +327,5 @@ public class StockTree implements StockIF {
 		
 		return compare;
 	}
-
-
-	
-	// /*
-	//  * TODO remove
-	//  */
-	// private void _test() {
-	// 	IteratorIF<Node> it = this.stock.iterator(GTree.IteratorModes.BREADTH);
-	// 	while (it.hasNext()) {
-	// 		Node n = it.getNext();
-	// 		int test = 1;
-	// 	}
-	// }
 	
 }

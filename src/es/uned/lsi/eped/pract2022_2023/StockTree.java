@@ -45,7 +45,7 @@ public class StockTree implements StockIF {
 		return units;
 	}
 	
-	/* TODO volver a separar en dos: readPath y buildPath */
+	
 	private GTreeIF<Node> readPath(GTreeIF<Node> parentTree, Queue<Node> queue, boolean insertIfNotFound) {
 		GTreeIF<Node> targetTree;
 		
@@ -71,38 +71,23 @@ public class StockTree implements StockIF {
 		// preparados para el árbol
 		Queue<Node> queue = getAuxQueue(p);
 		
-		
 		// leemos o insertamos recursivamente en el árbol los nodos de la cola
 		GTreeIF<Node> tree = readPath(this.stock, queue, true);
 		
-		/*
-		 * TODO refactor como recursiva
-		 */
-		while (!queue.isEmpty()) {
-			Node nextNode = queue.getFirst();
-			
-			GTreeIF<Node> child = this.getOrCreateChild(tree, nextNode);
-			
-			tree = child;			
-			queue.dequeue();
-		}
+		NodeInfo node = new NodeInfo(u);
+		this.updateInfoChild(tree, node);
 	}
 
 	@Override
 	public SequenceIF<StockPair> listStock(String prefix) {
 		ListIF<StockPair> stockList = new List<StockPair>();
 		
-		GTreeIF<Node> startTree = this.stock;
+		GTreeIF<Node> startTree;
 		if (prefix.length() > 0) {
 			Queue<Node> queue = getAuxQueue(prefix);
-			while (!queue.isEmpty()) {
-				Node nextNode = queue.getFirst();
-				
-				GTreeIF<Node> child = this.getChild(startTree, nextNode);
-				
-				startTree = child;			
-				queue.dequeue();
-			}
+			startTree = readPath(this.stock, queue, false);
+		} else {
+			startTree = this.stock;
 		}
 		
 		StringBuilder strBuilder = new StringBuilder(prefix);

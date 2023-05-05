@@ -25,19 +25,19 @@ public class StockTree implements StockIF {
 		
 		// Obtenemos cola auxiliar con los nodos
 		// a leer en el árbol
-		Queue<Node> queue = getAuxQueue(p);
+		Queue<Node> queue = this.getAuxQueue(p);
 		
 		// leemos recursivamente en el árbol los nodos de la cola
-		GTreeIF<Node> tree = readPath(this.stock, queue, false);
+		GTreeIF<Node> tree = this.readPath(this.stock, queue, false);
 		
 		if (tree == null) {
 			units = -1;
-		} else {
-			GTreeIF<Node> infoChild = getInfoChild(tree);
-			if (infoChild == null) {
+		} else {			
+			GTreeIF<Node> firstChild = tree.getChildren().get(1);
+			if (firstChild == null || firstChild.getRoot().getNodeType() != Node.NodeType.INFO) {
 				units = -1;
 			} else {
-				NodeInfo node = (NodeInfo) infoChild.getRoot();
+				NodeInfo node = (NodeInfo) firstChild.getRoot();
 				units = node.getUnidades(); 
 			}	
 		}
@@ -49,10 +49,10 @@ public class StockTree implements StockIF {
 	public void updateStock(String p, int u) {
 		// Obtenemos cola auxiliar con los nodos
 		// preparados para el árbol
-		Queue<Node> queue = getAuxQueue(p);
+		Queue<Node> queue = this.getAuxQueue(p);
 		
 		// leemos o insertamos recursivamente en el árbol los nodos de la cola
-		GTreeIF<Node> tree = readPath(this.stock, queue, true);
+		GTreeIF<Node> tree = this.readPath(this.stock, queue, true);
 		
 		NodeInfo node = new NodeInfo(u);
 		this.updateInfoChild(tree, node);
@@ -64,15 +64,15 @@ public class StockTree implements StockIF {
 		
 		GTreeIF<Node> startTree;
 		if (prefix.length() > 0) {
-			Queue<Node> queue = getAuxQueue(prefix);
-			startTree = readPath(this.stock, queue, false);
+			Queue<Node> queue = this.getAuxQueue(prefix);
+			startTree = this.readPath(this.stock, queue, false);
 		} else {
 			startTree = this.stock;
 		}
 		
 		StringBuilder strBuilder = new StringBuilder(prefix);
 		if (startTree != null) {
-			readChildren(startTree, stockList, strBuilder);
+			this.listChildren(startTree, stockList, strBuilder);
 		}
 		
 		return stockList;
@@ -89,13 +89,13 @@ public class StockTree implements StockIF {
 		if (child == null || queue.isEmpty()) {
 			targetTree = child;
 		} else {
-			targetTree = readPath(child, queue, insertIfNotFound);
+			targetTree = this.readPath(child, queue, insertIfNotFound);
 		}
 		
 		return targetTree;
 	}	
 	
-	private void readChildren(GTreeIF<Node> parentTree, ListIF<StockPair> stockList, StringBuilder strBuilder) {
+	private void listChildren(GTreeIF<Node> parentTree, ListIF<StockPair> stockList, StringBuilder strBuilder) {
 		ListIF<GTreeIF<Node>> children = parentTree.getChildren();
 		
 		if (children.size() != 0) {
@@ -124,7 +124,7 @@ public class StockTree implements StockIF {
 					strBuilderCopy.append(node.getLetter());
 					
 					// leer recursivamente hijos de currentChild
-					readChildren(currentChild, stockList, strBuilderCopy);
+					this.listChildren(currentChild, stockList, strBuilderCopy);
 				}		
 			}
 		}
@@ -143,24 +143,6 @@ public class StockTree implements StockIF {
 		return queue;
 	}
 
-	
-	private GTreeIF<Node> getOrCreateChild(GTreeIF<Node> tree, Node node) {
-		
-		GTreeIF<Node> child = null;
-		
-		if (node.getNodeType() == Node.NodeType.INFO) {
-			// si es NodeInfo, actualizar unidades
-			child = this.updateInfoChild(tree, node);
-		} else {
-			child = this.getChild(tree, node);
-			if (child == null) {
-				child = this.createChild(tree, node);
-			} 
-		}
-		
-		return child;
-	}
-	
 	private GTreeIF<Node> getChild(GTreeIF<Node> parentTree, Node node) {
 		ListIF<GTreeIF<Node>> children = parentTree.getChildren();
 		if (children.size() != 0) {
@@ -170,7 +152,7 @@ public class StockTree implements StockIF {
 				GTreeIF<Node> currentChild = iterator.getNext();
 				
 				try {  // controlar posible error lanzado por compareNodes
-					if (compareNodes(currentChild.getRoot(), node) == 0) {
+					if (this.compareNodes(currentChild.getRoot(), node) == 0) {
 						return currentChild;
 					}
 				} catch (Exception e) {
@@ -183,99 +165,77 @@ public class StockTree implements StockIF {
 		return null;
 	}
 	
-	private GTreeIF<Node> createChild(GTreeIF<Node> parentTree, Node node) {
-		
-		GTreeIF<Node> childTree = new GTree<Node>();
-		childTree.setRoot(node);
-		
-		ListIF<GTreeIF<Node>> children = parentTree.getChildren();
-		if (children.size() == 0 || node.getNodeType() == Node.NodeType.INFO) {
-			parentTree.addChild(1, childTree);
+	private GTreeIF<Node> getOrCreateChild(GTreeIF<Node> tree, Node node) {
+
+		GTreeIF<Node> child = null;
+		ListIF<GTreeIF<Node>> children = tree.getChildren();
+		if (children.size() == 0) {
+			child = this.createFirstChild(tree, node);
 		} else {
 			IteratorIF<GTreeIF<Node>> iterator = children.iterator();
-			
+			boolean found = false;
 			boolean inserted = false;
-			int i = 1;
-			while (iterator.hasNext() && !inserted) {
+			int pos = 1;
+			while (iterator.hasNext() && !found && !inserted) {
 				GTreeIF<Node> currentChild = iterator.getNext();
-				
-				try { // controlar posible error lanzado por compareNodes
-					if (compareNodes(node, currentChild.getRoot()) < 0) {
-						parentTree.addChild(i, childTree);
+				try {  // controlar posible error lanzado por compareNodes
+					int compareNodes = this.compareNodes(currentChild.getRoot(), node);
+					if (compareNodes == 0) {
+						child = currentChild;
+						found = true;
+					} else if (compareNodes > 0){
+						GTreeIF<Node> childTree = new GTree<Node>();
+						childTree.setRoot(node);
+						tree.addChild(pos, childTree);
+						child = childTree;
 						inserted = true;
-					} 
-				} catch (Exception e){
-					// no hacer nada, dejar que continúe el bucle 
+					}
+				} catch (Exception e) {
+					// no hacer nada, dejar que continúe el bucle
 				}
-				
-				i++;
+				pos++;
 			}
 			
-			if (!inserted) {
-				parentTree.addChild(i, childTree);
+			if (!found && !inserted) {
+				GTreeIF<Node> childTree = new GTree<Node>();
+				childTree.setRoot(node);
+				tree.addChild(pos, childTree);
+				child = childTree;
 				inserted = true;
 			}
 		}
-	
 		
-		return childTree;
+		return child;
 	}
 	
-	private GTreeIF<Node> createChild(GTreeIF<Node> parentTree, Node node, int position) {
+	
+	private GTreeIF<Node> updateInfoChild(GTreeIF<Node> parentTree, Node node) {
+		
+		GTreeIF<Node> child = null;
+				
+		ListIF<GTreeIF<Node>> children = parentTree.getChildren();
+		
+		if (children.size() == 0) {
+			child = this.createFirstChild(parentTree, node);
+		} else {
+			GTreeIF<Node> firstChild = children.get(1);
+			if (firstChild.getRoot().getNodeType() != Node.NodeType.INFO) {
+				child = this.createFirstChild(parentTree, node);
+			} else {
+				child = firstChild;
+				child.setRoot(node);
+			}	
+		}
+		
+		return child;
+	}
+	
+	private GTreeIF<Node> createFirstChild(GTreeIF<Node> parentTree, Node node) {
 		GTreeIF<Node> childTree = new GTree<Node>();
 		childTree.setRoot(node);
 		parentTree.addChild(1, childTree);
 		
 		return childTree;
-	}
-	
-	private GTreeIF<Node> getInfoChild(GTreeIF<Node> parentTree) {
-		
-		ListIF<GTreeIF<Node>> children = parentTree.getChildren();
-		
-		if (children.size() != 0) {			
-
-			IteratorIF<GTreeIF<Node>> iterator = children.iterator();
-			
-			while (iterator.hasNext()) {
-				
-				GTreeIF<Node> currentChild = iterator.getNext();
-				if (currentChild.getRoot().getNodeType() == Node.NodeType.INFO) {
-			
-					return currentChild;
-					
-				}
-			}
-		}
-		
-		return null;
-	}
-
-
-	private GTreeIF<Node> updateInfoChild(GTreeIF<Node> parentTree, Node node) {
-		GTreeIF<Node> child = null;
-		
-		ListIF<GTreeIF<Node>> children = parentTree.getChildren();
-		if (children.size() == 0) {
-			
-			child = this.createChild(parentTree, node, 1);
-		} else {
-			IteratorIF<GTreeIF<Node>> iterator = children.iterator();
-			boolean found = false;
-			while (iterator.hasNext() && !found) {
-				GTreeIF<Node> currentChild = iterator.getNext();
-				if (currentChild.getRoot().getNodeType() == Node.NodeType.INFO) {
-					found = true;
-					child = currentChild;
-					child.setRoot(node);
-				}
-			}
-			if (!found) {
-				child = this.createChild(parentTree, node, 1);
-			}
-		}
-		
-		return child;
 	}
 	
 	/*

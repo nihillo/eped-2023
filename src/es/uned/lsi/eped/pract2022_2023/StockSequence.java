@@ -59,7 +59,6 @@ public class StockSequence<E> implements StockIF {
 			this.stock.insert(this.stock.size() + 1, newElement);
 			inserted = true;
 		}
-		
 	}
 	
 	@Override

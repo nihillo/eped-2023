@@ -3,6 +3,7 @@ package es.uned.lsi.eped.pract2022_2023;
 import es.uned.lsi.eped.DataStructures.SequenceIF;
 import es.uned.lsi.eped.DataStructures.IteratorIF;
 import es.uned.lsi.eped.DataStructures.List;
+import es.uned.lsi.eped.DataStructures.Queue;
 
 public class StockSequence<E> implements StockIF {
 
@@ -62,21 +63,17 @@ public class StockSequence<E> implements StockIF {
 	}
 	
 	@Override
-	public SequenceIF<StockPair> listStock(String prefix) {
-		if (prefix.length() == 0) {
-			return this.stock;
-		}
-		
-		List<StockPair> partialStockList = new List<>();
+	public SequenceIF<StockPair> listStock(String prefix) {		
+		Queue<StockPair> stockQueue = new Queue<StockPair>();
 		IteratorIF<StockPair> iterator = this.stock.iterator();
 		
 		while (iterator.hasNext()) {
 			StockPair element = iterator.getNext();
-			if (element.getProducto().indexOf(prefix) == 0) {
-				partialStockList.insert(partialStockList.size() + 1, element);
+			if (prefix.length() == 0 || element.getProducto().indexOf(prefix) == 0) {
+				stockQueue.enqueue(element);
 			}
 		}
 		
-		return partialStockList;
+		return stockQueue;
 	}
 }

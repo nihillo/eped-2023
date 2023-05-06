@@ -114,7 +114,6 @@ public class StockTree implements StockIF {
 					StockPair stockPair = new StockPair(product, units);
 					
 					stockQueue.enqueue(stockPair);
-//					stockQueue.insert(stockQueue.size() + 1, stockPair);
 				} else {
 					// si es NodeInner, añadir caracter a cadena
 					NodeInner node = (NodeInner) currentChild.getRoot();

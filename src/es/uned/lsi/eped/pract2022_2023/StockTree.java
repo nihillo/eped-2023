@@ -60,7 +60,7 @@ public class StockTree implements StockIF {
 
 	@Override
 	public SequenceIF<StockPair> listStock(String prefix) {
-		ListIF<StockPair> stockList = new List<StockPair>();
+		Queue<StockPair> stockQueue = new Queue<StockPair>();
 		
 		GTreeIF<Node> startTree;
 		if (prefix.length() > 0) {
@@ -72,10 +72,10 @@ public class StockTree implements StockIF {
 		
 		StringBuilder strBuilder = new StringBuilder(prefix);
 		if (startTree != null) {
-			this.listChildren(startTree, stockList, strBuilder);
+			this.listChildren(startTree, stockQueue, strBuilder);
 		}
 		
-		return stockList;
+		return stockQueue;
 	}
 	
 	private GTreeIF<Node> readPath(GTreeIF<Node> parentTree, Queue<Node> queue, boolean insertIfNotFound) {
@@ -95,7 +95,7 @@ public class StockTree implements StockIF {
 		return targetTree;
 	}	
 	
-	private void listChildren(GTreeIF<Node> parentTree, ListIF<StockPair> stockList, StringBuilder strBuilder) {
+	private void listChildren(GTreeIF<Node> parentTree, Queue<StockPair> stockQueue, StringBuilder strBuilder) {
 		ListIF<GTreeIF<Node>> children = parentTree.getChildren();
 		
 		if (children.size() != 0) {
@@ -105,7 +105,7 @@ public class StockTree implements StockIF {
 				GTreeIF<Node> currentChild = iterator.getNext();
 					
 				if (currentChild.getRoot().getNodeType() == Node.NodeType.INFO) {
-					// si es NodeInfo, crear StockPair y añadir a stockList
+					// si es NodeInfo, crear StockPair y añadir a stockQueue
 					NodeInfo node = (NodeInfo) currentChild.getRoot();
 					
 					String product = strBuilder.toString(); 
@@ -113,7 +113,8 @@ public class StockTree implements StockIF {
 					
 					StockPair stockPair = new StockPair(product, units);
 					
-					stockList.insert(stockList.size() + 1, stockPair);
+					stockQueue.enqueue(stockPair);
+//					stockQueue.insert(stockQueue.size() + 1, stockPair);
 				} else {
 					// si es NodeInner, añadir caracter a cadena
 					NodeInner node = (NodeInner) currentChild.getRoot();
@@ -124,7 +125,7 @@ public class StockTree implements StockIF {
 					strBuilderCopy.append(node.getLetter());
 					
 					// leer recursivamente hijos de currentChild
-					this.listChildren(currentChild, stockList, strBuilderCopy);
+					this.listChildren(currentChild, stockQueue, strBuilderCopy);
 				}		
 			}
 		}
